@@ -39,11 +39,11 @@ class UserRegisterResource(Resource):
 
             # 2. 쿼리문 만들기
             query = '''insert into user
-                    (nickname, email, password)
+                    (email, password, name, gender )
                     values
-                    (%s, %s, %s);'''
+                    (%s, %s, %s, %s);'''
 
-            record = (data['nickname'], data['email'], hashed_password ) # 튜플형식
+            record = (data['email'], hashed_password, data['name'], data['gender'],  ) # 튜플형식
             # 3. 커서를 가져온다.
             cursor = connection.cursor()
 
@@ -103,8 +103,8 @@ class UserLoginResource(Resource):
 
             i = 0
             for record in result_list:
-                result_list[i]['created_at'] = record['created_at'].isoformat()
-                result_list[i]['updated_at'] = record['updated_at'].isoformat()
+                result_list[i]['createdAt'] = record['createdAt'].isoformat()
+                result_list[i]['updatedAt'] = record['updatedAt'].isoformat()
                 i = i + 1
 
             cursor.close()

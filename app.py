@@ -2,9 +2,9 @@ from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
 from config import Config
 from flask_restful import Api
-from resources.memo import MemoListResource, MemoInfoResource
+from resources.movie import MovieListResource, MovieInfoResource, MovieRatingResource
 from resources.user import UserRegisterResource, UserLoginResource, UserLogoutResource, jwt_blacklist
-from resources.follow import FollowResource, FollowListResource
+# from resources.follow import FollowResource, FollowListResource
 
 app = Flask(__name__)
 
@@ -25,13 +25,14 @@ api = Api(app)
 
 # 경로와 resource(API 코드)를 연결한다.
 
-api.add_resource(MemoListResource , '/memo')
 api.add_resource(UserRegisterResource, '/users/register')
 api.add_resource(UserLoginResource, '/users/login')
 api.add_resource(UserLogoutResource, '/users/logout')
-api.add_resource(MemoInfoResource , '/memo/<int:memo_id>')
-api.add_resource(FollowResource , '/follow/<int:followee_id>')
-api.add_resource(FollowListResource,'/follow')
+api.add_resource(MovieListResource , '/movie')
+api.add_resource(MovieInfoResource , '/movie/<int:movie_id>')
+api.add_resource(MovieRatingResource , '/movie/<int:movie_id>/ratings')
+# api.add_resource(FollowResource , '/follow/<int:followee_id>')
+# api.add_resource(FollowListResource,'/follow')
 
 if __name__ == '__main__' :
     app.run()
