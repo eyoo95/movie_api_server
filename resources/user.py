@@ -1,5 +1,5 @@
 from flask import request
-from flask_jwt_extended import create_access_token, get_jwt, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt, jwt_required, get_jwt_identity
 from flask_restful import Resource
 from mysql_connection import get_connection
 import mysql.connector
@@ -143,7 +143,96 @@ class UserLogoutResource(Resource):
         jwt_blacklist.add(jti)
         return {'result':'success'}, 200
 
-        
+class UserMypageResource(Resource):
+    @jwt_required()
+    def get(self):
+        try :
+            connection = get_connection()
+            user_id = get_jwt_identity()
+
+            query = '''select u.email, u.name, u.gender, m.id, m.title, r.rating 
+                        from user u
+                        left join rating r
+                        on u.id = r.userId
+                        left join movie m
+                        on m.id = r.movieId
+                        where u.id = %s;'''
+
+            record = (user_id,)
+
+            # select 문은 dictionary = True를 해준다.
+            cursor = connection.cursor(dictionary = True)  # 데이터를 셀렉할때 키벨류로 가져온다.
+
+            cursor.execute(query,record )
+
+            # select문은 아래 함수를 이용해서 데이터를 가져온다.
+            result_list = cursor.fetchall()
+            
+
+            cursor.close()
+            connection.close()
+
+        except mysql.connector.Error as e :
+            print(e)
+            cursor.close()
+            connection.close()
+            return {"error":str(e), 'error_no':20}, 503
+
+        return { "result" : "success",
+                "result_list" : result_list} , 200
+
+class UserFavoriteResource(Resource):
+    # 즐겨찾기 목록 API
+    @jwt_required()
+    def get(self) :
+        user_id = get_jwt_identity()
+        # 쿼리 스트링으로 오는 데이터는 아래처럼 처리한다.        
+
+
+        try :
+            connection = get_connection()
+
+            query = '''select r.movieId, m.title, count(r.userId) as reviews,
+                        ifnull(avg(r.rating),0) as avgRating,
+                        if(f.user_id is null, 0,1) as favorite
+                        from movie m
+                        left join rating r
+                        on m.id = r.movieId
+                        left join favorite f
+                        on f.movie_id = m.id
+                        left join user u
+                        on f.user_id = u.id
+                        where f.user_id = %s
+                        group by m.title;'''
+
+            record = (user_id,)
+
+            # select 문은 dictionary = True를 해준다.
+            cursor = connection.cursor(dictionary = True)  # 데이터를 셀렉할때 키벨류로 가져온다.
+
+            cursor.execute(query, record )
+
+            # select문은 아래 함수를 이용해서 데이터를 가져온다.
+            result_list = cursor.fetchall()
+
+            i = 0
+            for record in result_list:
+                result_list[i]['avgRating'] = float(record['avgRating'])
+                i = i + 1
+            
+
+            cursor.close()
+            connection.close()
+
+        except mysql.connector.Error as e :
+            print(e)
+            cursor.close()
+            connection.close()
+            return {"error":str(e), 'error_no':20}, 503
+
+        return { "result" : "success",
+                "count" : len(result_list),
+                "result_list" : result_list} , 200                 
 
 
 

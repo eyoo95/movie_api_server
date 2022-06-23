@@ -8,8 +8,11 @@ import mysql.connector
 
 class MovieListResource(Resource):
     # 영화 정보 리스트 API
+    @jwt_required()
     def get(self) :
-        # 쿼리 스트링으로 오는 데이터는 아래처럼 처리한다.        
+        # 쿼리 스트링으로 오는 데이터는 아래처럼 처리한다.  
+        user_id = get_jwt_identity()
+        
         order = request.args['order']
         offset = request.args['offset']
 
@@ -17,10 +20,12 @@ class MovieListResource(Resource):
         try :
             connection = get_connection()
 
-            query = '''select r.movieId, m.title, count(r.userId) as reviews, avg(r.rating) as avgRating
+            query = '''select r.movieId, m.title, count(r.userId) as reviews,
+                        ifnull(avg(r.rating),0) as avgRating,
+                        if(f.user_id is null, 0,1) as favorite
                         from movie m
-                        join rating r
-                        on m.id = r.movie_id
+                        left join rating r
+                        on m.id = r.movieId
                         group by m.title
                         order by '''+order+''' desc
                         limit '''+offset+''', 25;'''
@@ -61,9 +66,9 @@ class MovieInfoResource(Resource):
             try :
                 connection = get_connection()
 
-                query = '''select r.movie_id, m.title, m.year, m.attendance, avg(r.rating) as avgRating
+                query = '''select m.*, count(r.userId) as reviews, ifnull(avg(r.rating),0) as avgRating
                             from movie m
-                            join rating r
+                            left join rating r
                             on m.id = r.movieId and r.movieId = %s
                             group by r.movieId;'''
 
@@ -81,6 +86,8 @@ class MovieInfoResource(Resource):
                 for record in result_list:
                     result_list[i]['avgRating'] = float(record['avgRating'])
                     result_list[i]['year'] = record['year'].isoformat()
+                    result_list[i]['createdAt'] = record['createdAt'].isoformat()
+                    result_list[i]['updatedAt'] = record['updatedAt'].isoformat()
                     i = i + 1
                 
 
@@ -103,11 +110,11 @@ class MovieRatingResource(Resource):
             try :
                 connection = get_connection()
 
-                query = '''select u.name, u.gender, r.rating
+                query = '''select r.userId, u.name, u.gender, r.rating
                             from movie m
-                            join rating r
+                            left join rating r
                             on m.id = r.movieId and r.movieId = %s
-                            join user u
+                            left join user u
                             on r.userId = u.id
                             limit '''+offset+''', 25;'''
 
@@ -120,11 +127,6 @@ class MovieRatingResource(Resource):
 
                 # select문은 아래 함수를 이용해서 데이터를 가져온다.
                 result_list = cursor.fetchall()
-
-                # i = 0
-                # for record in result_list:
-                #     result_list[i]['avg_rating'] = float(record['avg_rating'])
-                #     i = i + 1
                 
 
                 cursor.close()
@@ -139,3 +141,76 @@ class MovieRatingResource(Resource):
             return { "result" : "success",
                     "count" : len(result_list),
                     "result_list" : result_list} , 200
+
+class MoviefavoriteResource(Resource):
+    # 즐겨찾기 추가하는 API
+    @jwt_required()
+    def post(self, movie_id):
+
+        user_id = get_jwt_identity()
+
+        try:
+            connection = get_connection()
+
+            query =  '''insert 
+                        into favorite
+                        (user_id,movie_id)
+                        value
+                        (%s,%s);'''
+
+            record = (user_id, movie_id)
+
+            cursor = connection.cursor()
+
+            cursor.execute(query, record)
+
+            connection.commit()
+
+            cursor.close()
+            connection.close()
+
+        except Error as e:
+            print (e)
+            cursor.close()
+            connection.close()
+            return {'error':str(e)} , 503
+        
+        return {'result': 'success'}, 200
+
+    # 즐겨찾기 삭제하는 API
+    @jwt_required()
+    def delete(self, movie_id ):
+        user_id = get_jwt_identity()
+        
+        try : 
+            # 1. DB에 연결
+            connection = get_connection()            
+
+            # 2. 쿼리문 만들기
+            query = '''delete from favorite
+                        where user_id = %s and movie_id = %s;'''
+
+            record = (user_id,movie_id ) # 튜플형식
+
+
+            # 3. 커서를 가져온다.
+            cursor = connection.cursor()
+
+            # 4. 쿼리문을 커서를 이용해서 실행한다.
+            cursor.execute(query, record )
+
+            # 5. 커넥션을 커밋해줘야 한다 => 디비에 영구적으로 반영하라는 뜻
+            connection.commit()
+
+            # 6. 자원 해제
+            cursor.close()
+            connection.close()
+
+        except mysql.connector.Error as e :
+            print(e)
+            cursor.close()
+            connection.close()
+            return {'error':str(e)}, 503
+
+        return {'result': 'success'} , 200             
+
