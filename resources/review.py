@@ -10,10 +10,9 @@ class ReviewSearchResource(Resource):
     # 리뷰 작성할 영화검색 API
     def post(self) :
 
-        data = request.get_json()
-
+        keyword = request.args['keyword']
         offset = request.args['offset']
-
+        
         try :
             connection = get_connection()
 
@@ -21,7 +20,7 @@ class ReviewSearchResource(Resource):
                         from movie m
                         left join rating r
                         on m.id = r.movieId
-                        where m.title like '%'''+data['keyword']+'''%'
+                        where m.title like '%'''+keyword+'''%'
                         group by m.id;
                         limit '''+offset+''', 25;'''
 
