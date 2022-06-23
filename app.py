@@ -5,7 +5,7 @@ from flask_restful import Api
 from resources.movie import MovieListResource, MovieInfoResource, MovieRatingResource, MoviefavoriteResource
 from resources.user import UserRegisterResource, UserLoginResource, UserLogoutResource, UserMypageResource, UserFavoriteResource, jwt_blacklist
 from resources.review import ReviewSearchResource, ReviewResource
-from resources.recommend import MovieReccomResource
+from resources.recommend import MovieReccomResource, MovieRecomRealTimeRersource
 app = Flask(__name__)
 
 # 환경변수 세팅
@@ -37,6 +37,7 @@ api.add_resource(MovieRatingResource , '/movie/<int:movie_id>/ratings')
 api.add_resource(ReviewSearchResource , '/review')
 api.add_resource(ReviewResource , '/review/<int:movie_id>')
 api.add_resource(MovieReccomResource , '/movie/recommend')
+api.add_resource(MovieRecomRealTimeRersource , '/movie/RTrecommend')
 
 if __name__ == '__main__' :
     app.run()
