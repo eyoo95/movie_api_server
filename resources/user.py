@@ -180,6 +180,7 @@ class UserMypageResource(Resource):
             return {"error":str(e), 'error_no':20}, 503
 
         return { "result" : "success",
+                "count" : len(result_list),
                 "result_list" : result_list} , 200
 
 class UserFavoriteResource(Resource):
