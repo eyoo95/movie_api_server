@@ -144,6 +144,7 @@ class UserLogoutResource(Resource):
         return {'result':'success'}, 200
 
 class UserMypageResource(Resource):
+    # 마이페이지 불러오는 API
     @jwt_required()
     def get(self):
         try :
@@ -186,6 +187,7 @@ class UserFavoriteResource(Resource):
     @jwt_required()
     def get(self) :
         user_id = get_jwt_identity()
+        offset = request.args['offset']
         # 쿼리 스트링으로 오는 데이터는 아래처럼 처리한다.        
 
 
@@ -194,16 +196,17 @@ class UserFavoriteResource(Resource):
 
             query = '''select r.movieId, m.title, count(r.userId) as reviews,
                         ifnull(avg(r.rating),0) as avgRating,
-                        if(f.user_id is null, 0,1) as favorite
+                        if(f.userId is null, 0,1) as favorite
                         from movie m
                         left join rating r
                         on m.id = r.movieId
                         left join favorite f
-                        on f.movie_id = m.id
+                        on f.movieId = m.id
                         left join user u
-                        on f.user_id = u.id
-                        where f.user_id = %s
-                        group by m.title;'''
+                        on f.userId = u.id
+                        where f.userId = %s
+                        group by m.id
+                        limit '''+offset+''', 25;'''
 
             record = (user_id,)
 

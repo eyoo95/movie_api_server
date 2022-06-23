@@ -22,11 +22,11 @@ class MovieListResource(Resource):
 
             query = '''select r.movieId, m.title, count(r.userId) as reviews,
                         ifnull(avg(r.rating),0) as avgRating,
-                        if(f.user_id is null, 0,1) as favorite
+                        if(f.userId is null, 0,1) as favorite
                         from movie m
                         left join rating r
                         on m.id = r.movieId
-                        group by m.title
+                        group by m.id
                         order by '''+order+''' desc
                         limit '''+offset+''', 25;'''
 
@@ -112,9 +112,9 @@ class MovieRatingResource(Resource):
 
                 query = '''select r.userId, u.name, u.gender, r.rating
                             from movie m
-                            left join rating r
+                            join rating r
                             on m.id = r.movieId and r.movieId = %s
-                            left join user u
+                            join user u
                             on r.userId = u.id
                             limit '''+offset+''', 25;'''
 
@@ -154,7 +154,7 @@ class MoviefavoriteResource(Resource):
 
             query =  '''insert 
                         into favorite
-                        (user_id,movie_id)
+                        (userId,movieId)
                         value
                         (%s,%s);'''
 
@@ -188,7 +188,7 @@ class MoviefavoriteResource(Resource):
 
             # 2. 쿼리문 만들기
             query = '''delete from favorite
-                        where user_id = %s and movie_id = %s;'''
+                        where userId = %s and movieId = %s;'''
 
             record = (user_id,movie_id ) # 튜플형식
 

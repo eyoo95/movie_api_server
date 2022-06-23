@@ -7,12 +7,11 @@ import mysql.connector
 
 
 class ReviewSearchResource(Resource):
-    # 영화검색 API
+    # 리뷰 작성할 영화검색 API
     def post(self) :
 
         data = request.get_json()
 
-        limit = request.args['limit']
         offset = request.args['offset']
 
         try :
@@ -23,8 +22,8 @@ class ReviewSearchResource(Resource):
                         left join rating r
                         on m.id = r.movieId
                         where m.title like '%'''+data['keyword']+'''%'
-                        group by m.title;
-                        limit '''+offset+''', '''+limit+''';'''
+                        group by m.id;
+                        limit '''+offset+''', 25;'''
 
             # select 문은 dictionary = True를 해준다.
             cursor = connection.cursor(dictionary = True)  # 데이터를 셀렉할때 키벨류로 가져온다.
