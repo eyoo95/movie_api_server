@@ -6,6 +6,8 @@ from resources.movie import MovieListResource, MovieInfoResource, MovieRatingRes
 from resources.user import UserRegisterResource, UserLoginResource, UserLogoutResource, UserMypageResource, UserFavoriteResource, jwt_blacklist
 from resources.review import ReviewSearchResource, ReviewResource
 from resources.recommend import MovieReccomResource, MovieRecomRealTimeRersource
+
+
 app = Flask(__name__)
 
 # 환경변수 세팅
