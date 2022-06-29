@@ -5,7 +5,6 @@ from mysql_connection import get_connection
 import mysql.connector
 from email_validator import validate_email, EmailNotValidError
 from utils import hash_password, check_password
-import datetime
 
 
 class UserRegisterResource(Resource):
